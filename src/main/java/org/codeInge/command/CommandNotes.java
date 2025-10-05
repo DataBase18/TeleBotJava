@@ -1,13 +1,12 @@
 package org.codeInge.command;
 
-import org.checkerframework.checker.units.qual.A;
-import org.codeInge.Main;
 import org.codeInge.bot.ChatManager;
 import org.codeInge.bot.MainBot;
 import org.codeInge.commandTexts.CommandNotesTexts;
 import org.codeInge.commandTexts.CommandStartTexts;
 import org.codeInge.models.ConversationChatContext;
 import org.codeInge.utilities.GlobalConstants;
+import org.codeInge.utilities.GlobalMethods;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -17,9 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +27,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 
 public class CommandNotes extends Command {
@@ -40,7 +36,7 @@ public class CommandNotes extends Command {
 
     @Override
     public void firstMessageAfterToEnter(Update update) {
-        Long chatId = 0L;
+        Long chatId  ;
         if ( update.hasCallbackQuery()) {
             chatId = update.getCallbackQuery().getMessage().getChatId();
         }else{
@@ -48,8 +44,7 @@ public class CommandNotes extends Command {
         }
 
         //Clear the steps and conversation for this context
-        ChatManager.clearConversationContext(chatId);
-        ChatManager.clearStep(chatId);
+        ChatManager.clearAll(chatId);
 
 
         InlineKeyboardButton viewNotesBtn = InlineKeyboardButton.builder()
@@ -60,15 +55,12 @@ public class CommandNotes extends Command {
                 .text(CommandNotesTexts.CREATE_NOTE_BTN_TEXT)
                 .callbackData(CommandNotesTexts.ASK_NOTE_DATA_METHOD_NAME)
                 .build();
-        InlineKeyboardButton backButton = InlineKeyboardButton.builder()
-                .text(GlobalConstants.BACK_BUTTON_TEXT)
-                .callbackData(GlobalConstants.BACK_MENU_METHOD_NAME)
-                .build();
+
 
         InlineKeyboardRow row = new InlineKeyboardRow();
         row.add(viewNotesBtn);
         row.add(createNoteBtn);
-        row.add(backButton);
+        row.add(getBackButton());
 
         InlineKeyboardMarkup buttonsGroup = InlineKeyboardMarkup.builder()
             .keyboardRow( row)
@@ -97,7 +89,7 @@ public class CommandNotes extends Command {
             viewNotesInDir(update);
         } else if (data.equals(GlobalConstants.BACK_MENU_METHOD_NAME)) {
             backButtonAction(update);
-        } else if (splitNameMethodViewNote(data).equals(CommandNotesTexts.VIEW_INDIVIDUAL_NOTE_METHOD_NAME)) {
+        } else if (GlobalMethods.splitNameMethod(data).equals(CommandNotesTexts.VIEW_INDIVIDUAL_NOTE_METHOD_NAME)) {
             showNoteBy(update);
         }else if(data.equals(GlobalConstants.NEXT_BUTTON_METHOD_NAME)){
             updateNotesShowedInMessage(update, 1);
@@ -107,35 +99,6 @@ public class CommandNotes extends Command {
         }
     }
 
-    @Override
-    public void backButtonAction(Update update) {
-        Long chatId = update.getCallbackQuery().getMessage().getChatId();
-        EditMessageText editedMessageToMainMenu = EditMessageText.builder()
-            .chatId(chatId)
-            .messageId(update.getCallbackQuery().getMessage().getMessageId())
-            .text(CommandStartTexts.WELCOME_TEXT)
-            .build();
-        MainBot.editMessageTo(editedMessageToMainMenu);
-
-        //Clear the context
-        ChatManager.clearConversationContext(chatId);
-        ChatManager.clearStep(chatId);
-    }
-
-    public String splitNameMethodViewNote(String method){
-        String[] parts = method.split("=");
-        if (parts.length != 0){
-            return parts[0];
-        }
-        return "---N/A---";
-    }
-    public String splitNameNoteFromCallbackData(String data){
-        String[] parts = data.split("=");
-        if (parts.length != 0){
-            return parts[1];
-        }
-        return "---N/A---";
-    }
 
     public void askNoteData(Update update ) {
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -250,7 +213,7 @@ public class CommandNotes extends Command {
         String data = update.getCallbackQuery().getData();
 
         //read note
-        String content = readNoteFromDir(splitNameNoteFromCallbackData(data));
+        String content = readNoteFromDir(GlobalMethods.splitValueCallbackData(data));
 
 
         //Send note content
@@ -265,19 +228,16 @@ public class CommandNotes extends Command {
 
         //For send main menu notes after any seconds
         ScheduledExecutorService schedulerToSendMessage = Executors.newScheduledThreadPool(1);
-        schedulerToSendMessage.schedule(() -> {
-            firstMessageAfterToEnter(update);
-        }, 3, TimeUnit.SECONDS);
+        schedulerToSendMessage.schedule(() -> firstMessageAfterToEnter(update), 3, TimeUnit.SECONDS);
 
     }
 
     private String readNoteFromDir(String note){
-        String read = null;
+        String read ;
         try {
             read = Files.readString(Path.of(GlobalConstants.PathToNotes+note+".txt"), StandardCharsets.UTF_8);
             return read;
         } catch (IOException e) {
-            System.out.println(e);
             return "";
         }
     }

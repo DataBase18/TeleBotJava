@@ -26,10 +26,5 @@ public class CommandStart extends Command {
 
     }
 
-    @Override
-    public void backButtonAction(Update update) {
-
-    }
-
 
 }

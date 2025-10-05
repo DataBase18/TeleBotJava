@@ -27,8 +27,4 @@ public class CommandDefault extends Command{
 
     }
 
-    @Override
-    public void backButtonAction(Update update) {
-
-    }
 }

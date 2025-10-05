@@ -6,6 +6,8 @@ import org.codeInge.utilities.GlobalConstants;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -61,6 +63,12 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
             case Commands.commandNotes:
                 CommandNotes.instance.firstMessageAfterToEnter(update);
                 break;
+            case Commands.commandCamera:
+                CommandCamera.instance.firstMessageAfterToEnter(update);
+                break;
+            case Commands.commandLog:
+                CommandLog.instance.firstMessageAfterToEnter(update);
+                break;
             default:
                 CommandDefault.instance.firstMessageAfterToEnter(update);
                 break;
@@ -78,6 +86,22 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
     public static void editMessageTo(EditMessageText message){
         try {
             MainBot.telegramClient.execute(message);
+        } catch (TelegramApiException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void sendPhoto(SendPhoto photo){
+        try {
+            MainBot.telegramClient.execute(photo);
+        } catch (TelegramApiException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void deleteMessage(DeleteMessage deleteMessage){
+        try {
+            MainBot.telegramClient.execute(deleteMessage);
         } catch (TelegramApiException e) {
             System.out.println(e.getMessage());
         }

@@ -15,15 +15,24 @@
       <option name="ignoredModules">
         <list>
           <option value="BotTelegram" />
+          <option value="BotTelegram" />
+          <option value="BotTelegram" />
+          <option value="BotTelegram" />
         </list>
       </option>
       <option name="ignoredPackages">
         <list>
           <option value="org.apache.commons:commons-lang3:3.14.0" />
+          <option value="org.apache.xmlgraphics:xmlgraphics-commons:1.3.1" />
+          <option value="com.google.guava:guava:14.0.1" />
+          <option value="log4j:log4j:1.2.14" />
         </list>
       </option>
       <option name="ignoredReasons">
         <list>
+          <option value="Not exploitable" />
+          <option value="In progress" />
+          <option value="Not exploitable" />
           <option value="Not exploitable" />
         </list>
       </option>
