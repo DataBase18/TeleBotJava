@@ -36,6 +36,8 @@ public class ChatManager {
         conversations.put(chatId, conversationChatContext);
     }
 
+
+
     public static void clearConversationContext(Long chatId) {
         conversations.remove(chatId);
     }

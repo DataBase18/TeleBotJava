@@ -1,5 +1,6 @@
 package org.codeInge.command;
 
+import org.checkerframework.checker.units.qual.A;
 import org.codeInge.Main;
 import org.codeInge.bot.ChatManager;
 import org.codeInge.bot.MainBot;
@@ -16,12 +17,20 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 public class CommandNotes extends Command {
@@ -31,8 +40,12 @@ public class CommandNotes extends Command {
 
     @Override
     public void firstMessageAfterToEnter(Update update) {
-
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = 0L;
+        if ( update.hasCallbackQuery()) {
+            chatId = update.getCallbackQuery().getMessage().getChatId();
+        }else{
+            chatId = update.getMessage().getChatId();
+        }
 
         //Clear the steps and conversation for this context
         ChatManager.clearConversationContext(chatId);
@@ -47,7 +60,6 @@ public class CommandNotes extends Command {
                 .text(CommandNotesTexts.CREATE_NOTE_BTN_TEXT)
                 .callbackData(CommandNotesTexts.ASK_NOTE_DATA_METHOD_NAME)
                 .build();
-
         InlineKeyboardButton backButton = InlineKeyboardButton.builder()
                 .text(GlobalConstants.BACK_BUTTON_TEXT)
                 .callbackData(GlobalConstants.BACK_MENU_METHOD_NAME)
@@ -61,7 +73,6 @@ public class CommandNotes extends Command {
         InlineKeyboardMarkup buttonsGroup = InlineKeyboardMarkup.builder()
             .keyboardRow( row)
             .build();
-
 
         SendMessage message = SendMessage
             .builder()
@@ -81,13 +92,15 @@ public class CommandNotes extends Command {
     public void processButtons(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
         String data = callbackQuery.getData();
-        switch (data) {
-            case CommandNotesTexts.ASK_NOTE_DATA_METHOD_NAME:
-                askNoteData(update);
-                break;
-            case GlobalConstants.BACK_MENU_METHOD_NAME:
-                backButtonAction(update);
-                break;
+
+        if (data.equals(CommandNotesTexts.ASK_NOTE_DATA_METHOD_NAME)) {
+            askNoteData(update);
+        } else if (data.equals(CommandNotesTexts.VIEW_NOTES_METHOD_NAME)) {
+            viewNotesInDir(update);
+        } else if (data.equals(GlobalConstants.BACK_MENU_METHOD_NAME)) {
+            backButtonAction(update);
+        } else if (splitNameMethodViewNote(data).equals(CommandNotesTexts.VIEW_INDIVIDUAL_NOTE_METHOD_NAME)) {
+            showNoteBy(update);
         }
     }
 
@@ -104,6 +117,21 @@ public class CommandNotes extends Command {
         //Clear the context
         ChatManager.clearConversationContext(chatId);
         ChatManager.clearStep(chatId);
+    }
+
+    public String splitNameMethodViewNote(String method){
+        String[] parts = method.split("=");
+        if (parts.length != 0){
+            return parts[0];
+        }
+        return "---N/A---";
+    }
+    public String splitNameNoteFromCallbackData(String data){
+        String[] parts = data.split("=");
+        if (parts.length != 0){
+            return parts[1];
+        }
+        return "---N/A---";
     }
 
     public void askNoteData(Update update ) {
@@ -134,7 +162,8 @@ public class CommandNotes extends Command {
 
                 ChatManager.registerNextStep(chatId, this::askTitleNote);
             }else {
-                ConversationChatContext conversation = new ConversationChatContext(title, "");
+                ConversationChatContext conversation = new ConversationChatContext();
+                conversation.setCurrentNoteTitle(title);
                 ChatManager.setConversationContext(chatId, conversation);
 
                 SendMessage message = SendMessage
@@ -197,7 +226,6 @@ public class CommandNotes extends Command {
         }
     }
 
-
     private Boolean createNoteInDir (String title, String content) {
         try {
             Files.writeString(
@@ -214,15 +242,43 @@ public class CommandNotes extends Command {
         }
     }
 
+    private void showNoteBy (Update update) {
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        String data = update.getCallbackQuery().getData();
+
+        //read note
+        String content = readNoteFromDir(splitNameNoteFromCallbackData(data));
+
+
+        //Send note content
+        SendMessage message = SendMessage
+            .builder()
+            .chatId(chatId.toString())
+            .text(CommandNotesTexts.CONTENT_NOTE_HEADER+content)
+            .parseMode("HTML")
+            .build();
+
+        MainBot.sendMessageTo(message);
+
+        //For send main menu notes after any seconds
+        ScheduledExecutorService schedulerToSendMessage = Executors.newScheduledThreadPool(1);
+        schedulerToSendMessage.schedule(() -> {
+            firstMessageAfterToEnter(update);
+        }, 3, TimeUnit.SECONDS);
+
+    }
+
     private String readNoteFromDir(String note){
         String read = null;
         try {
             read = Files.readString(Path.of(GlobalConstants.PathToNotes+note+".txt"), StandardCharsets.UTF_8);
+            return read;
         } catch (IOException e) {
-            return null;
+            System.out.println(e);
+            return "";
         }
-        return read;
     }
+
 
     private boolean existsNoteInDir(String nameNote){
         File validator =  new File(GlobalConstants.PathToNotes+nameNote+".txt");
@@ -230,8 +286,108 @@ public class CommandNotes extends Command {
     }
 
     private void viewNotesInDir(Update update) {
-        Long chatId = update.getMessage().getChatId();
+        File directoryOfNotes = new File(GlobalConstants.PathToNotes);
+        File[] notes = directoryOfNotes.listFiles((file) -> file.isFile() && file.getName().endsWith(".txt"));
 
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        if(notes != null &&  notes.length > 0) {
+
+            //Get the conversation context
+            ConversationChatContext conversation =  ChatManager.getConversationContext(chatId);
+            if (conversation == null) {
+                ChatManager.setConversationContext(chatId, new ConversationChatContext());
+                conversation  = new ConversationChatContext();
+            }
+
+            //Calculate groups
+            ArrayList<File> notesInDir = new ArrayList<>(Arrays.stream(notes).toList());
+            int totalElements = notesInDir.size();
+            int groupsCount = (int) Math.ceil((double) totalElements / GlobalConstants.maxButtonsToPagesStandardValue);
+
+            //Reset context for notes and set vars
+            conversation.setNotesList(new ArrayList<>());
+            conversation.setCurrentGroupPagination(0);
+            for (int i = 0; i < groupsCount; i++) {
+                int start = i * GlobalConstants.maxButtonsToPagesStandardValue;
+                int end = Math.min(start + GlobalConstants.maxButtonsToPagesStandardValue, totalElements);
+                ArrayList<File> group = new  ArrayList<>(notesInDir.subList(start, end));
+                ArrayList<String> notesGroup = new ArrayList<>();
+                for (File note : group) {
+                    notesGroup.add(note.getName().replace(".txt", ""));
+                }
+                conversation.getNotesList().add(notesGroup);
+            }
+
+            //Generate init notes group
+            List<InlineKeyboardRow> rows = new ArrayList<>();
+            for (String note : conversation.getNotesList().getFirst()){
+                InlineKeyboardButton noteButton = InlineKeyboardButton.builder()
+                    .text(note)
+                    .callbackData(CommandNotesTexts.VIEW_INDIVIDUAL_NOTE_METHOD_NAME+"="+note)
+                    .build();
+
+                InlineKeyboardRow oneRow = new InlineKeyboardRow();
+                oneRow.add(noteButton);
+
+                rows.add(oneRow);
+            }
+
+            //Back button
+            InlineKeyboardButton backButton = InlineKeyboardButton.builder()
+                .text(GlobalConstants.BACK_BUTTON_TEXT)
+                .callbackData(GlobalConstants.BACK_MENU_METHOD_NAME)
+                .build();
+
+            InlineKeyboardRow backRowButton = new InlineKeyboardRow();
+            backRowButton.add(backButton);
+
+            InlineKeyboardMarkup allNotesToShow = InlineKeyboardMarkup.builder()
+                .keyboard(rows)
+                .keyboardRow(backRowButton)
+                .build();
+
+            SendMessage message = SendMessage
+                    .builder()
+                    .chatId(chatId.toString())
+                    .text(CommandNotesTexts.SELECT_NOTE_MESSAGE)
+                    .replyMarkup(allNotesToShow)
+                    .build();
+
+            MainBot.sendMessageTo(message);
+
+        } else {
+            InlineKeyboardButton createNoteBtn = InlineKeyboardButton.builder()
+                .text(CommandNotesTexts.CREATE_NOTE_BTN_TEXT)
+                .callbackData(CommandNotesTexts.ASK_NOTE_DATA_METHOD_NAME)
+                .build();
+            InlineKeyboardButton backButton = InlineKeyboardButton.builder()
+                .text(GlobalConstants.BACK_BUTTON_TEXT)
+                .callbackData(GlobalConstants.BACK_MENU_METHOD_NAME)
+                .build();
+
+            InlineKeyboardRow oneRow = new InlineKeyboardRow();
+            oneRow.add(createNoteBtn);
+            InlineKeyboardRow twoRow = new InlineKeyboardRow();
+            twoRow.add(backButton);
+
+            InlineKeyboardMarkup buttonsGroup = InlineKeyboardMarkup.builder()
+                .keyboardRow( oneRow)
+                .keyboardRow( twoRow)
+                .build();
+
+            EditMessageText message = EditMessageText
+                    .builder()
+                    .messageId(update.getCallbackQuery().getMessage().getMessageId())
+                    .chatId(chatId.toString())
+                    .text(CommandNotesTexts.NOT_EXISTS_NOTES_MESSAGE)
+                    .replyMarkup(buttonsGroup)
+                    .build();
+            MainBot.editMessageTo(message);
+        }
+
+        ChatManager.registerNextStep(chatId, this::processButtons);
     }
+
+
 
 }

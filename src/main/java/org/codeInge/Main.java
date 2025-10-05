@@ -11,7 +11,6 @@ public class Main {
 
         Config config;
         try {
-
             config = new Config(GlobalConstants.PathToProperties);
         }catch (Exception e){
             throw new RuntimeException(e);
