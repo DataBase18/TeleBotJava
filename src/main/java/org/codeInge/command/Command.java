@@ -4,6 +4,7 @@ import org.codeInge.bot.ChatManager;
 import org.codeInge.bot.MainBot;
 import org.codeInge.commandTexts.CommandStartTexts;
 import org.codeInge.utilities.GlobalConstants;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -16,12 +17,21 @@ public abstract class Command {
     public abstract void processButtons(Update update);
     public void backButtonAction(Update update){
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
-        EditMessageText editedMessageToMainMenu = EditMessageText.builder()
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            EditMessageText editedMessageToMainMenu = EditMessageText.builder()
+                    .chatId(chatId)
+                    .messageId(update.getCallbackQuery().getMessage().getMessageId())
+                    .text(CommandStartTexts.WELCOME_TEXT)
+                    .build();
+            MainBot.editMessageTo(editedMessageToMainMenu);
+        }else{
+            deleteLastMessage(update);
+            SendMessage newMessage = SendMessage.builder()
                 .chatId(chatId)
-                .messageId(update.getCallbackQuery().getMessage().getMessageId())
                 .text(CommandStartTexts.WELCOME_TEXT)
                 .build();
-        MainBot.editMessageTo(editedMessageToMainMenu);
+            MainBot.sendMessageTo(newMessage);
+        }
 
         //Clear the context
         ChatManager.clearConversationContext(chatId);
