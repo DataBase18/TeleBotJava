@@ -8,4 +8,7 @@ public class Commands {
     public static final String commandReminders = "/recordatorios";
     public static final String commandCamera = "/camara";
     public static final String commandLog = "/log";
+    public static final String commandNetwork = "/red";
+    public static final String commandStatusCpu = "/estado";
+    public static final String commandAudioRecord = "/audio";
 }

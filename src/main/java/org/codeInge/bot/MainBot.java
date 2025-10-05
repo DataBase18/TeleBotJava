@@ -69,6 +69,9 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
             case Commands.commandLog:
                 CommandLog.instance.firstMessageAfterToEnter(update);
                 break;
+            case Commands.commandNetwork:
+                CommandNetwork.instance.firstMessageAfterToEnter(update);
+                break;
             default:
                 CommandDefault.instance.firstMessageAfterToEnter(update);
                 break;
