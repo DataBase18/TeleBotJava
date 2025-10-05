@@ -86,8 +86,6 @@ public class CommandNotes extends Command {
         MainBot.sendMessageTo(message);
     }
 
-
-
     @Override
     public void processButtons(Update update) {
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -101,6 +99,11 @@ public class CommandNotes extends Command {
             backButtonAction(update);
         } else if (splitNameMethodViewNote(data).equals(CommandNotesTexts.VIEW_INDIVIDUAL_NOTE_METHOD_NAME)) {
             showNoteBy(update);
+        }else if(data.equals(GlobalConstants.NEXT_BUTTON_METHOD_NAME)){
+            updateNotesShowedInMessage(update, 1);
+        }else if(data.equals(GlobalConstants.PREVIOUS_BUTTON_METHOD_NAME)){
+
+            updateNotesShowedInMessage(update, -1);
         }
     }
 
@@ -279,10 +282,62 @@ public class CommandNotes extends Command {
         }
     }
 
-
     private boolean existsNoteInDir(String nameNote){
         File validator =  new File(GlobalConstants.PathToNotes+nameNote+".txt");
         return validator.exists();
+    }
+
+    private InlineKeyboardMarkup generateGroupButtons(ArrayList<ArrayList<String>> allGroups, int indexToGroup){
+        ArrayList<String> list = allGroups.get(indexToGroup);
+
+        List<InlineKeyboardRow> rows = new ArrayList<>();
+        for (String note : list){
+            InlineKeyboardButton noteButton = InlineKeyboardButton.builder()
+                    .text(note)
+                    .callbackData(CommandNotesTexts.VIEW_INDIVIDUAL_NOTE_METHOD_NAME+"="+note)
+                    .build();
+
+            InlineKeyboardRow oneRow = new InlineKeyboardRow();
+            oneRow.add(noteButton);
+
+            rows.add(oneRow);
+        }
+
+        //Back button
+        InlineKeyboardButton backButton = InlineKeyboardButton.builder()
+                .text(GlobalConstants.BACK_BUTTON_TEXT)
+                .callbackData(GlobalConstants.BACK_MENU_METHOD_NAME)
+                .build();
+
+        InlineKeyboardRow backRowButton = new InlineKeyboardRow();
+
+        //Add to row button Previous if apply
+        if  (indexToGroup>0){
+            //Previous button
+            InlineKeyboardButton nextButton = InlineKeyboardButton.builder()
+                .text(GlobalConstants.PREVIOUS_BUTTON_ICON)
+                .callbackData(GlobalConstants.PREVIOUS_BUTTON_METHOD_NAME)
+                .build();
+            backRowButton.add(nextButton);
+        }
+
+        //Add back button for middle position
+        backRowButton.add(backButton);
+
+        //Add to row button to next if apply
+        if (allGroups.size() > 1 && allGroups.size() > (indexToGroup+1)){
+            //Next button
+            InlineKeyboardButton nextButton = InlineKeyboardButton.builder()
+                    .text(GlobalConstants.NEXT_BUTTON_ICON)
+                    .callbackData(GlobalConstants.NEXT_BUTTON_METHOD_NAME)
+                    .build();
+            backRowButton.add(nextButton);
+        }
+
+        return InlineKeyboardMarkup.builder()
+                .keyboard(rows)
+                .keyboardRow(backRowButton)
+                .build();
     }
 
     private void viewNotesInDir(Update update) {
@@ -319,41 +374,19 @@ public class CommandNotes extends Command {
             }
 
             //Generate init notes group
-            List<InlineKeyboardRow> rows = new ArrayList<>();
-            for (String note : conversation.getNotesList().getFirst()){
-                InlineKeyboardButton noteButton = InlineKeyboardButton.builder()
-                    .text(note)
-                    .callbackData(CommandNotesTexts.VIEW_INDIVIDUAL_NOTE_METHOD_NAME+"="+note)
-                    .build();
+            InlineKeyboardMarkup allNotesToShow = generateGroupButtons(conversation.getNotesList(), 0);
 
-                InlineKeyboardRow oneRow = new InlineKeyboardRow();
-                oneRow.add(noteButton);
-
-                rows.add(oneRow);
-            }
-
-            //Back button
-            InlineKeyboardButton backButton = InlineKeyboardButton.builder()
-                .text(GlobalConstants.BACK_BUTTON_TEXT)
-                .callbackData(GlobalConstants.BACK_MENU_METHOD_NAME)
-                .build();
-
-            InlineKeyboardRow backRowButton = new InlineKeyboardRow();
-            backRowButton.add(backButton);
-
-            InlineKeyboardMarkup allNotesToShow = InlineKeyboardMarkup.builder()
-                .keyboard(rows)
-                .keyboardRow(backRowButton)
-                .build();
-
+            //Send message
             SendMessage message = SendMessage
                     .builder()
                     .chatId(chatId.toString())
                     .text(CommandNotesTexts.SELECT_NOTE_MESSAGE)
                     .replyMarkup(allNotesToShow)
                     .build();
-
             MainBot.sendMessageTo(message);
+
+            //Save state
+            ChatManager.setConversationContext(chatId, conversation);
 
         } else {
             InlineKeyboardButton createNoteBtn = InlineKeyboardButton.builder()
@@ -389,5 +422,32 @@ public class CommandNotes extends Command {
     }
 
 
+    /// typeMovement can take value -1 or 1 to plus of the index the buttons group
+    private void updateNotesShowedInMessage(Update update, int typeMovement){
+        Long chatId = update.getCallbackQuery().getMessage().getChatId();
+        ConversationChatContext conversation = ChatManager.getConversationContext(chatId);
+
+        //update index to group
+        int newIndex = conversation.getCurrentGroupPagination()+typeMovement;
+        conversation.setCurrentGroupPagination(newIndex);
+
+        //get new buttons
+        InlineKeyboardMarkup allNotesToShow = generateGroupButtons(conversation.getNotesList(), newIndex);
+
+        EditMessageText messageEdited = EditMessageText
+            .builder()
+            .messageId(update.getCallbackQuery().getMessage().getMessageId())
+            .chatId(chatId.toString())
+            .text(CommandNotesTexts.NOT_EXISTS_NOTES_MESSAGE)
+            .replyMarkup(allNotesToShow)
+            .build();
+        MainBot.editMessageTo(messageEdited);
+
+        //Save next step
+        ChatManager.registerNextStep(chatId, this::processButtons);
+
+        //Update state
+        ChatManager.setConversationContext(chatId, conversation);
+    }
 
 }

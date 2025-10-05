@@ -10,7 +10,13 @@ public class GlobalConstants {
 
     public static String PathToNotes="C:\\TeleBotAbner\\Notes\\";
     public static final String BACK_BUTTON_TEXT="Regresar";
+
     public static final String BACK_MENU_METHOD_NAME="backToMenu";
+
+    public static final String NEXT_BUTTON_ICON="➡\uFE0F";
+    public static final String PREVIOUS_BUTTON_ICON="⬅\uFE0F";
+    public static final String NEXT_BUTTON_METHOD_NAME="nextResultGroup";
+    public static final String PREVIOUS_BUTTON_METHOD_NAME="previousResultGroup";
 
     public  static final int maxButtonsToPagesStandardValue=5;
 

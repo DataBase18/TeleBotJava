@@ -8,7 +8,7 @@ public class CommandNotesTexts {
     public static String INVALID_NOTE_TITLE_MESSAGE="Lo siento, por favor escribe un titulo valido";
     public static String NOTE_ALREADY_EXISTS_MESSAGE="Lo siento, esta nota ya ha sido ingresada, por favor ingresa otro nombre";
     public static String NOT_EXISTS_NOTES_MESSAGE="Lo siento, aúnno has registrado notas. Por favor selecciona alguna opción";
-    public static String SELECT_NOTE_MESSAGE="Selecciona la nota que deseas ver. Si tienes muchas puedes navegaro con los botones";
+    public static String SELECT_NOTE_MESSAGE="Selecciona la nota que deseas ver.";
 
     public static final String VIEW_NOTES_BTN_TEXT="Ver notas";
     public static final String CREATE_NOTE_BTN_TEXT="Crear nota";
