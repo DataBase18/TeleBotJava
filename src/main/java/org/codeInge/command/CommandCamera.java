@@ -163,6 +163,7 @@ public class CommandCamera extends Command {
         Long  chatId = update.getCallbackQuery().getMessage().getChatId();
 
         Webcam webcam = Webcam.getWebcamByName(camName);
+        webcam.setViewSize(new Dimension(640, 480));
         webcam.open();
 
         boolean photoSuccess = false;
