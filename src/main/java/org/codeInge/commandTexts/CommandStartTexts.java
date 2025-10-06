@@ -11,6 +11,7 @@ public class CommandStartTexts {
             "/red: Escaneo de host conectados en la red del hogar\n"+
             "/estado: Revisa el estado del cpu donde esta ejectuando el bot\n"+
             "/audio: Graba un audio en el microfono de tu PC por algunos segundos\n"+
+            "/ejecutar: Ejecuta comandos shell de la pc\n"+
             "/log: Revisa los logs del bot\n"  ;
 
 

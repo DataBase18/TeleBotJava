@@ -4,6 +4,7 @@ import org.codeInge.command.*;
 import org.codeInge.commandTexts.CommandAudioTexts;
 import org.codeInge.utilities.Config;
 import org.codeInge.utilities.GlobalConstants;
+import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
@@ -57,8 +58,11 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
     }
 
 
-    public void mainMenu(Update update){
-        switch (update.getMessage().getText()) {
+    public void mainMenu(@NotNull Update update){
+        String command = update.getMessage().getText();
+        String[] split = command.split(" ");
+        System.out.println(split.length);
+        switch (split[0]) {
             case Commands.commandStart :
                 CommandStart.instance.firstMessageAfterToEnter(update);
                 break;
@@ -79,6 +83,13 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
                 break;
             case Commands.commandAudioRecord:
                 CommandAudio.instance.firstMessageAfterToEnter(update);
+                break;
+            case Commands.commandExecute:
+                if(split.length == 1){ //Only command
+                    CommandExecutor.instance.firstMessageAfterToEnter(update);
+                }else{ //Command With params
+                    CommandExecutor.instance.processCommand(update, split[1]);
+                }
                 break;
             default:
                 CommandDefault.instance.firstMessageAfterToEnter(update);

@@ -11,4 +11,5 @@ public class Commands {
     public static final String commandNetwork = "/red";
     public static final String commandStatusCpu = "/estado";
     public static final String commandAudioRecord = "/audio";
+    public static final String commandExecute = "/ejecutar";
 }
