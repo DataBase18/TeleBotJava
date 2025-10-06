@@ -115,6 +115,9 @@ al ser parte de Telegram y no directamente de un aplicativo.
 ![Captura del bot](assets/estado.jpg)
 ![Captura del bot](assets/notesMovile.jpg)
 
+<style>
+    img { width: 200px; margin-right: 10px; }
+</style>
 
 ## 🧠 Estructura del proyecto
 
