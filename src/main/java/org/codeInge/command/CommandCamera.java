@@ -11,8 +11,6 @@ import org.codeInge.utilities.GlobalMethods;
 import org.codeInge.utilities.Logger;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -96,31 +94,18 @@ public class CommandCamera extends Command {
     private void saveTempPhoto(Update update) {
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-        //Generate new name
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        String timestamp = sdf.format(new Date());
+        boolean successMove = GlobalMethods.moveFile(
+        GlobalConstants.PathToPictures+"temp.png",
+                GlobalConstants.PathToPictures,
+                "png"
+        );
 
-        //Move photo
-        boolean successMove = false;
-        try {
-            Files.move(new File(GlobalConstants.PathToPictures+"temp.png").toPath(),
-                    new File(GlobalConstants.PathToPictures+timestamp+".png").toPath(),
-                    StandardCopyOption.REPLACE_EXISTING);
-            successMove= true;
-        } catch (IOException e) {
-            Logger.saveLog(Logger.formatLog(e.getMessage()));
-            Logger.saveLog(Logger.formatLog(e.getCause().getMessage()));
-            Logger.saveLog(Logger.formatLog(e.getLocalizedMessage()));
-            Logger.saveLog("---------------------------------");
-        }
-
-        String messageText = CommandCameraTexts.SUCCESS_SAVED_PHOTO_MESSAGE  + timestamp+".png";
+        String messageText = CommandCameraTexts.SUCCESS_SAVED_PHOTO_MESSAGE ;
         if (!successMove){
             messageText = CommandCameraTexts.FAILED_SAVED_PHOTO;
         }
 
-        //Remove last message
-        deleteLastMessage(update);
+
 
         SendMessage message = SendMessage
             .builder()

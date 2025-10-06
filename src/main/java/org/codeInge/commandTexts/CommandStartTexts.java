@@ -10,6 +10,7 @@ public class CommandStartTexts {
             "/archivos: Gestiona carga y descarga de archivos\n"+
             "/red: Escaneo de host conectados en la red del hogar\n"+
             "/estado: Revisa el estado del cpu donde esta ejectuando el bot\n"+
+            "/audio: Graba un audio en el microfono de tu PC por algunos segundos\n"+
             "/log: Revisa los logs del bot\n"  ;
 
 

@@ -12,7 +12,12 @@ public class CommandStart extends Command {
 
     @Override
     public void firstMessageAfterToEnter(Update update) {
-        Long chatId = update.getMessage().getChatId();
+        Long chatId = 0L;
+        if(update.hasMessage() && update.getMessage().hasText()) {
+            chatId = update.getMessage().getChatId();
+        }else{
+            chatId = update.getCallbackQuery().getMessage().getChatId();
+        }
         SendMessage message = new SendMessage(chatId.toString(), CommandStartTexts.WELCOME_TEXT);
         try {
             MainBot.telegramClient.execute(message);

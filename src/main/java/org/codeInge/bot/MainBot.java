@@ -1,10 +1,12 @@
 package org.codeInge.bot;
 
 import org.codeInge.command.*;
+import org.codeInge.commandTexts.CommandAudioTexts;
 import org.codeInge.utilities.Config;
 import org.codeInge.utilities.GlobalConstants;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
+import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -75,6 +77,9 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
             case Commands.commandStatusCpu:
                 CommandState.instance.firstMessageAfterToEnter(update);
                 break;
+            case Commands.commandAudioRecord:
+                CommandAudio.instance.firstMessageAfterToEnter(update);
+                break;
             default:
                 CommandDefault.instance.firstMessageAfterToEnter(update);
                 break;
@@ -108,6 +113,14 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
     public static void deleteMessage(DeleteMessage deleteMessage){
         try {
             MainBot.telegramClient.execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void sendAudioMessage(SendAudio audioMessage){
+        try {
+            MainBot.telegramClient.execute(audioMessage);
         } catch (TelegramApiException e) {
             System.out.println(e.getMessage());
         }

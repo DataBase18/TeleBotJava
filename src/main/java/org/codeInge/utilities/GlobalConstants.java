@@ -11,6 +11,7 @@ public class GlobalConstants {
     public static String PathToNotes="C:\\TeleBotAbner\\Notes\\";
     public static String PathToPictures="C:\\TeleBotAbner\\Images\\";
     public static String PathToLog="C:\\TeleBotAbner\\Logs\\";
+    public static String PathToRecords="C:\\TeleBotAbner\\Records\\";
     public static final String BACK_BUTTON_TEXT="Regresar";
 
     public static final String BACK_MENU_METHOD_NAME="backToMenu";

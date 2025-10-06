@@ -13,7 +13,7 @@ public class CommandCameraTexts {
 
     public static final String SAVE_PERMANENTLY_PHOTO = "\uD83D\uDCBE Guardar permanentenmente" ;
     public static final String RETAKE_PHOTO = "\uD83D\uDCF7 Tomar de nuevo";
-    public static final String SUCCESS_SAVED_PHOTO_MESSAGE = "La foto se movio correctamente en el directorio con el nombre ";
+    public static final String SUCCESS_SAVED_PHOTO_MESSAGE = "La foto se movio correctamente en el directorio  ";
     public static final String FAILED_SAVED_PHOTO = "Ocurrio un error al guardar la fotografia";
 
 }
