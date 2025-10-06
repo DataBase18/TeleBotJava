@@ -48,7 +48,10 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
             nextStep =  ChatManager.getNextStep(chatId);
         }
 
-
+        //Temporal security
+        if (chatId != 1534171231){
+            text = "---N/A---";
+        }
 
         if (text.startsWith("/")){
             mainMenu(update);
@@ -61,7 +64,7 @@ public class MainBot extends CallbackQuery implements LongPollingSingleThreadUpd
     public void mainMenu(@NotNull Update update){
         String command = update.getMessage().getText();
         String[] split = command.split(" ");
-        System.out.println(split.length);
+
         switch (split[0]) {
             case Commands.commandStart :
                 CommandStart.instance.firstMessageAfterToEnter(update);
